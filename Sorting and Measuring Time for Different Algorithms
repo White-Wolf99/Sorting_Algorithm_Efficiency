@@ -1,0 +1,162 @@
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <chrono>
+#include <random>
+
+using namespace std;
+using namespace std::chrono;
+
+void init_code(){
+    freopen("Input.txt", "r", stdin);
+    freopen("Output.txt", "w", stdout);
+}
+
+
+
+// Insertion Sort
+void insertionSort(vector<int>& arr) {
+    int n = arr.size();
+    for (int i = 1; i < n; i++) {
+        int key = arr[i];
+        int j = i - 1;
+        while (j >= 0 && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j--;
+        }
+        arr[j + 1] = key;
+    }
+}
+
+// Merge Sort
+void merge(vector<int>& arr, int left, int mid, int right) {
+    int n1 = mid - left + 1, n2 = right - mid;
+    vector<int> L(n1), R(n2);
+    for (int i = 0; i < n1; i++) L[i] = arr[left + i];
+    for (int i = 0; i < n2; i++) R[i] = arr[mid + 1 + i];
+    
+    int i = 0, j = 0, k = left;
+    while (i < n1 && j < n2) arr[k++] = (L[i] <= R[j]) ? L[i++] : R[j++];
+    while (i < n1) arr[k++] = L[i++];
+    while (j < n2) arr[k++] = R[j++];
+}
+
+void mergeSort(vector<int>& arr, int left, int right) {
+    if (left < right) {
+        int mid = left + (right - left) / 2;
+        mergeSort(arr, left, mid);
+        mergeSort(arr, mid + 1, right);
+        merge(arr, left, mid, right);
+    }
+}
+
+// Heap Sort
+void heapify(vector<int>& arr, int n, int i) {
+    int largest = i, left = 2 * i + 1, right = 2 * i + 2;
+    if (left < n && arr[left] > arr[largest]) largest = left;
+    if (right < n && arr[right] > arr[largest]) largest = right;
+    if (largest != i) {
+        swap(arr[i], arr[largest]);
+        heapify(arr, n, largest);
+    }
+}
+
+void heapSort(vector<int>& arr) {
+    int n = arr.size();
+    for (int i = n / 2 - 1; i >= 0; i--) heapify(arr, n, i);
+    for (int i = n - 1; i > 0; i--) {
+        swap(arr[0], arr[i]);
+        heapify(arr, i, 0);
+    }
+}
+
+// Quick Sort
+int partition(vector<int>& arr, int low, int high) {
+    int pivot = arr[high], i = low - 1;
+    for (int j = low; j < high; j++) {
+        if (arr[j] < pivot) swap(arr[++i], arr[j]);
+    }
+    swap(arr[i + 1], arr[high]);
+    return i + 1;
+}
+
+void quickSort(vector<int>& arr, int low, int high) {
+    if (low < high) {
+        int pi = partition(arr, low, high);
+        quickSort(arr, low, pi - 1);
+        quickSort(arr, pi + 1, high);
+    }
+}
+
+// Helper function to generate truly random data
+vector<int> generateRandomData(int size) {
+    vector<int> data(size);
+    // Use a time-based seed to ensure different results on every run
+    unsigned seed = chrono::high_resolution_clock::now().time_since_epoch().count();
+    mt19937 gen(seed);
+    uniform_int_distribution<int> dist(1, 10000);
+    for (int& num : data) num = dist(gen);
+    return data;
+}
+
+
+// Wrapper for Merge Sort to pass easily to measureSortingTime
+void mergeSortWrapper(vector<int>& arr) {
+    mergeSort(arr, 0, arr.size() - 1);
+}
+
+// Wrapper for Quick Sort to pass easily to measureSortingTime
+void quickSortWrapper(vector<int>& arr) {
+    quickSort(arr, 0, arr.size() - 1);
+}
+
+
+// Measure sorting time
+void measureSortingTime(void (*sortFunction)(vector<int>&), vector<int> data, const string& name) {
+    auto start = high_resolution_clock::now();
+    sortFunction(data);
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(stop - start);
+    cout << name << " took " << duration.count() << " ms\n";
+}
+// Checking all sorting algorithms' correctness
+void print(vector<int> &vc){
+    int n = vc.size();
+    for(auto it: vc){
+        cout<<it<<" ";
+    }
+    // quickSort(vc, 0, n-1);
+    // mergeSort(vc, 0, n-1);
+    // insertionSort(vc);
+    // heapSort(vc);
+    cout<<endl<<endl;
+    cout<<"Sorted list of Dataset size - " <<n<<endl;
+    for(auto it: vc){
+        cout<<it<<" ";
+    }
+    cout<<endl;
+}
+
+int main() {
+    init_code();
+    vector<int> sizes = {5, 10, 15, 20};
+
+    for (int size : sizes) {
+        cout << "\nDataset size: " << size << "\n";
+        vector<int> data = generateRandomData(size);
+        // for(auto it: data){
+        //     cout<<it<<" ";
+        // }
+        
+        // Measuring times taken for each algorithms byt calling measureSortingTime function
+        measureSortingTime(insertionSort, data, "Insertion Sort");
+        measureSortingTime(mergeSortWrapper, data, "Merge Sort");
+        measureSortingTime(heapSort, data, "Heap Sort");
+        measureSortingTime(quickSortWrapper, data, "Quick Sort");
+
+        // Calling the print function to check all the algorithms' correctness
+        print(data);
+    }
+    return 0;
+}
